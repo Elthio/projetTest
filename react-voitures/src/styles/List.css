@@ -1,0 +1,154 @@
+.list-container {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.list-header h2 {
+  margin: 0;
+  color: #1a237e;
+  font-size: 1.5rem;
+}
+
+.list-actions {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.search-container {
+  position: relative;
+}
+
+.search-input {
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 250px;
+  transition: border-color 0.3s;
+}
+
+.search-input:focus {
+  border-color: #1a237e;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.2);
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.data-table th {
+  background-color: #1a237e;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.data-table th.ascending::after {
+  content: ' ▲';
+  font-size: 0.7em;
+}
+
+.data-table th.descending::after {
+  content: ' ▼';
+  font-size: 0.7em;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+.actions-column {
+  width: 100px;
+  text-align: center;
+}
+
+.actions-cell {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 5px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.btn-edit {
+  color: #1a237e;
+}
+
+.btn-edit:hover {
+  background-color: rgba(26, 35, 126, 0.1);
+}
+
+.btn-delete {
+  color: #dc3545;
+}
+
+.btn-delete:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.no-data {
+  text-align: center;
+  padding: 30px;
+  color: #757575;
+  font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .list-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .search-input {
+    width: 100%;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
