@@ -1,78 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Container, Typography, Box, Snackbar, Alert } from '@mui/material';
 import VehiculeList from '../components/vehicules/VehiculeList';
 import VehiculeSearch from '../components/vehicules/VehiculeSearch';
 import vehiculeService from '../services/vehiculeService';
+import useApi from '../utils/useApi';
 
 const VehiculesPage = () => {
-  const [vehicules, setVehicules] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [page, setPage] = useState(0);
+  // États pour la pagination et le tri
+  const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [sortBy, setSortBy] = useState('id');
   const [sortOrder, setSortOrder] = useState('DESC');
+  const [filters, setFilters] = useState({});
+  
+  // État pour les notifications
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success'
   });
-
-  useEffect(() => {
-    console.log('VehiculesPage - useEffect déclenché avec:', { page, limit, sortBy, sortOrder });
-    fetchVehicules();
-  }, [page, limit, sortBy, sortOrder]);
-
-  const fetchVehicules = async (filters = {}) => {
-    try {
-      console.log('VehiculesPage - fetchVehicules appelé avec filters:', filters);
-      setLoading(true);
-      const response = await vehiculeService.getVehicules(page, limit, {
-        ...filters,
-        sortBy,
-        sortOrder
-      });
-      
-      console.log('VehiculesPage - réponse reçue:', response);
-      
-      if (response) {
-        console.log('VehiculesPage - mise à jour des véhicules:', response.items);
-        console.log('VehiculesPage - mise à jour du total:', response.total);
-        setVehicules(response.items || []);
-        setTotal(response.total || 0);
-      } else {
-        console.warn('VehiculesPage - réponse vide, réinitialisation des données');
-        setVehicules([]);
-        setTotal(0);
-      }
-      setError(null);
-    } catch (err) {
-      console.error('VehiculesPage - Erreur lors du chargement des véhicules:', err);
-      setError('Impossible de charger les véhicules. Veuillez réessayer.');
-      setVehicules([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-      console.log('VehiculesPage - chargement terminé');
+  
+  // Référence pour stocker directement les données
+  const dataRef = useRef({ items: [], total: 0 });
+  
+  // Fonction pour effectuer l'appel API
+  const fetchVehicules = async () => {
+    console.log('VehiculesPage - fetchVehicules appelé avec:', { page, limit, sortBy, sortOrder, filters });
+    const response = await vehiculeService.getVehicules(page, limit, {
+      ...filters,
+      sortBy,
+      sortOrder
+    });
+    
+    // Stocker les données dans la référence
+    if (response) {
+      dataRef.current = response;
     }
+    
+    return response;
   };
+  
+  // Utiliser notre hook personnalisé
+  const { data, loading, error, refetch } = useApi(
+    fetchVehicules,
+    [page, limit, sortBy, sortOrder, JSON.stringify(filters)],
+    {
+      initialData: { items: [], total: 0 },
+      onSuccess: (result) => {
+        console.log('VehiculesPage - Données chargées avec succès:', result);
+      },
+      onError: (err) => {
+        console.error('VehiculesPage - Erreur lors du chargement des données:', err);
+        setSnackbar({
+          open: true,
+          message: 'Erreur lors du chargement des véhicules',
+          severity: 'error'
+        });
+      }
+    }
+  );
+  
+  // Extraire les données
+  const vehicules = data?.items || [];
+  const total = data?.total || 0;
 
   const handleSearch = (searchFilters) => {
     console.log('VehiculesPage - handleSearch appelé avec:', searchFilters);
-    setPage(0);
-    fetchVehicules(searchFilters);
+    setFilters(searchFilters);
+    setPage(1);
   };
 
   const handlePageChange = (newPage) => {
     console.log('VehiculesPage - handlePageChange appelé avec:', newPage);
-    setPage(newPage - 1); // Ajustement pour la pagination basée sur 1 dans l'UI
+    setPage(newPage);
   };
 
   const handleLimitChange = (newLimit) => {
     console.log('VehiculesPage - handleLimitChange appelé avec:', newLimit);
     setLimit(newLimit);
-    setPage(0);
+    setPage(1);
   };
 
   const handleSort = (field, direction) => {
@@ -93,7 +99,7 @@ const VehiculesPage = () => {
       });
       
       // Rafraîchir la liste
-      fetchVehicules();
+      refetch();
     } catch (err) {
       console.error('VehiculesPage - Erreur lors de la suppression du véhicule:', err);
       
@@ -109,7 +115,15 @@ const VehiculesPage = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
   };
 
-  console.log('VehiculesPage - rendu avec:', { vehicules, total, page, limit, loading, error });
+  console.log('VehiculesPage - rendu avec:', { 
+    vehicules, 
+    vehiculesLength: vehicules.length,
+    total, 
+    page, 
+    limit, 
+    loading, 
+    error 
+  });
 
   return (
     <Container maxWidth="xl">
@@ -127,7 +141,7 @@ const VehiculesPage = () => {
       <VehiculeList
         vehicules={vehicules}
         total={total}
-        page={page + 1} // Ajustement pour la pagination basée sur 1 dans l'UI
+        page={page}
         limit={limit}
         onPageChange={handlePageChange}
         onLimitChange={handleLimitChange}

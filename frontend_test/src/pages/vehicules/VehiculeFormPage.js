@@ -72,7 +72,7 @@ const VehiculeFormPage = () => {
         setEnergies(energiesResponse['hydra:member'] || []);
         
         // Chargement des clients
-        const clientsResponse = await clientService.getClients(0, 100);
+        const clientsResponse = await clientService.getClients(1, 100);
         setClients(clientsResponse.items || []);
         
         setLoadingOptions(false);

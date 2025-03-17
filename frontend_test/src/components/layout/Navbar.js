@@ -36,6 +36,7 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 const Navbar = () => {
   const theme = useTheme();
@@ -73,6 +74,12 @@ const Navbar = () => {
   ];
 
   const mainItems = [
+    { 
+      text: 'Importation', 
+      icon: <CloudUploadIcon sx={{ color: '#4caf50' }} />, 
+      path: '/import',
+      highlight: true 
+    },
     { text: 'Accueil', icon: <HomeIcon />, path: '/' },
     { text: 'Véhicules', icon: <DirectionsCarIcon />, path: '/vehicules' },
     { text: 'Clients', icon: <PeopleIcon />, path: '/clients' },
@@ -96,7 +103,6 @@ const Navbar = () => {
       <List>
         {mainItems.map((item) => (
           <ListItem 
-            button 
             key={item.text} 
             component={Link} 
             to={item.path}
@@ -109,10 +115,30 @@ const Navbar = () => {
               pl: isActive(item.path) ? 2 : 3,
               '&:hover': {
                 bgcolor: 'rgba(255, 255, 255, 0.08)',
-              }
+              },
+              ...(item.highlight && !isActive(item.path) ? {
+                bgcolor: 'rgba(76, 175, 80, 0.08)',
+                borderLeft: '4px solid #4caf50',
+                position: 'relative',
+                '&::after': {
+                  content: '"NEW"',
+                  position: 'absolute',
+                  right: 16,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold',
+                  color: '#4caf50',
+                  backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                  padding: '2px 6px',
+                  borderRadius: 10,
+                }
+              } : {})
             }}
           >
-            <ListItemIcon sx={{ color: isActive(item.path) ? 'primary.main' : 'inherit' }}>
+            <ListItemIcon sx={{ 
+              color: isActive(item.path) ? 'primary.main' : (item.highlight ? '#4caf50' : 'inherit') 
+            }}>
               {item.icon}
             </ListItemIcon>
             <ListItemText primary={item.text} />
@@ -126,7 +152,6 @@ const Navbar = () => {
       <List>
         {referenceItems.map((item) => (
           <ListItem 
-            button 
             key={item.text} 
             component={Link} 
             to={item.path}
@@ -247,20 +272,41 @@ const Navbar = () => {
                       startIcon={item.icon}
                       sx={{
                         my: 2,
-                        mx: 0.5,
+                        mx: { xs: 0.2, sm: 0.5 },
                         color: 'white',
                         display: 'flex',
                         borderRadius: 2,
-                        px: 2,
+                        px: { xs: 1, sm: 2 },
                         py: 1,
                         textTransform: 'none',
                         fontWeight: 500,
-                        fontSize: '0.95rem',
+                        fontSize: { xs: '0.85rem', sm: '0.95rem' },
                         backgroundColor: isActive(item.path) ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
                         '&:hover': {
                           backgroundColor: 'rgba(255, 255, 255, 0.05)',
                         },
                         transition: 'all 0.3s ease',
+                        ...(item.highlight && !isActive(item.path) ? {
+                          background: 'linear-gradient(45deg, #2e7d32 30%, #4caf50 90%)',
+                          boxShadow: '0 3px 5px 2px rgba(76, 175, 80, .3)',
+                          color: 'white',
+                          animation: 'pulse 2s infinite',
+                          '@keyframes pulse': {
+                            '0%': { boxShadow: '0 0 0 0 rgba(76, 175, 80, 0.7)' },
+                            '70%': { boxShadow: '0 0 0 10px rgba(76, 175, 80, 0)' },
+                            '100%': { boxShadow: '0 0 0 0 rgba(76, 175, 80, 0)' }
+                          },
+                          order: -1,
+                          flexGrow: { xs: 0, md: 0 },
+                          minWidth: { xs: 'auto', sm: 'auto' },
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        } : {}),
+                        ...(item.highlight && isActive(item.path) ? {
+                          backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                          order: -1
+                        } : {})
                       }}
                     >
                       {item.text}

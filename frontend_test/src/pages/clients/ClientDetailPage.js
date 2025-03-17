@@ -57,7 +57,7 @@ const ClientDetailPage = () => {
         } else {
           // Si aucun véhicule n'est présent dans la réponse, faire une requête séparée
           try {
-            const vehiculesResponse = await vehiculeService.getVehicules(0, 10, { 'client.id': id });
+            const vehiculesResponse = await vehiculeService.getVehicules(1, 10, { 'client.id': id });
             setVehicules(vehiculesResponse.items || []);
           } catch (vehiculeErr) {
             console.error('Erreur lors du chargement des véhicules:', vehiculeErr);

@@ -65,15 +65,15 @@ const HomePage = () => {
         setLoading(true);
         
         // Récupérer les données des véhicules
-        const vehiculesResponse = await vehiculeService.getVehicules(0, 1);
+        const vehiculesResponse = await vehiculeService.getVehicules(1, 1);
         const totalVehicules = vehiculesResponse.total || 0;
         
         // Récupérer les données des clients
-        const clientsResponse = await clientService.getClients(0, 1);
+        const clientsResponse = await clientService.getClients(1, 1);
         const totalClients = clientsResponse.total || 0;
         
         // Récupérer les données des ventes
-        const ventesResponse = await venteService.getVentes(0, 5);
+        const ventesResponse = await venteService.getVentes(1, 5);
         const totalVentes = ventesResponse.total || 0;
         
         // Formater les ventes récentes

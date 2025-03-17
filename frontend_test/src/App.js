@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage';
 import VehiculesPage from './pages/VehiculesPage';
 import ClientsPage from './pages/ClientsPage';
 import VentesPage from './pages/VentesPage';
+import ImportPage from './pages/ImportPage';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -249,6 +250,9 @@ function App() {
             <Route path="/ventes/new" element={<VenteFormPage />} />
             <Route path="/ventes/:id" element={<VenteDetailPage />} />
             <Route path="/ventes/:id/edit" element={<VenteFormPage />} />
+            
+            {/* Route Importation */}
+            <Route path="/import" element={<ImportPage />} />
             
             {/* Routes Références */}
             <Route path="/civilites" element={<CivilitesPage />} />

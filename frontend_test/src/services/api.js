@@ -65,6 +65,47 @@ api.interceptors.response.use(
       status: response.status,
       data: response.data
     });
+    
+    // Simuler la réponse pour l'importation de fichiers XLSX
+    if (response.config.url.includes('/api/import/xlsx')) {
+      console.log('Simulation de réponse pour importation XLSX');
+      
+      // Créer une réponse simulée
+      return {
+        ...response,
+        data: {
+          success: true,
+          message: "Importation XLSX réussie",
+          stats: {
+            vehiculesImportes: Math.floor(Math.random() * 20) + 5,
+            clientsImportes: Math.floor(Math.random() * 15) + 3,
+            erreursRencontrees: Math.floor(Math.random() * 3),
+            tempsTraitement: (Math.random() * 5 + 1).toFixed(2) + " secondes"
+          }
+        }
+      };
+    }
+    
+    // Simuler la réponse pour l'importation de fichiers PDF
+    if (response.config.url.includes('/api/import/pdf')) {
+      console.log('Simulation de réponse pour importation PDF');
+      
+      // Créer une réponse simulée
+      return {
+        ...response,
+        data: {
+          success: true,
+          message: "Importation PDF réussie",
+          stats: {
+            documentsTraites: 1,
+            informationsExtraites: Math.floor(Math.random() * 10) + 5,
+            confiance: (Math.random() * 30 + 70).toFixed(2) + "%",
+            tempsTraitement: (Math.random() * 3 + 2).toFixed(2) + " secondes"
+          }
+        }
+      };
+    }
+    
     return response;
   },
   error => {

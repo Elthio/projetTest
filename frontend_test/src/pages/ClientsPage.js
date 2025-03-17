@@ -1,76 +1,88 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Container, Typography, Box, Snackbar, Alert } from '@mui/material';
 import ClientList from '../components/clients/ClientList';
 import ClientSearch from '../components/clients/ClientSearch';
 import clientService from '../services/clientService';
+import useApi from '../utils/useApi';
 
 const ClientsPage = () => {
-  const [clients, setClients] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [page, setPage] = useState(0);
+  // États pour la pagination et le tri
+  const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [sortBy, setSortBy] = useState('id');
   const [sortOrder, setSortOrder] = useState('DESC');
+  const [filters, setFilters] = useState({});
+  
+  // État pour les notifications
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success'
   });
-
-  useEffect(() => {
-    fetchClients();
-  }, [page, limit, sortBy, sortOrder]);
-
-  const fetchClients = async (filters = {}) => {
-    try {
-      setLoading(true);
-      const response = await clientService.getClients(page, limit, {
-        ...filters,
-        sortBy,
-        sortOrder
-      });
-      
-      if (response) {
-        setClients(response.items || []);
-        setTotal(response.total || 0);
-      } else {
-        setClients([]);
-        setTotal(0);
-      }
-      setError(null);
-    } catch (err) {
-      console.error('Erreur lors du chargement des clients:', err);
-      setError('Impossible de charger les clients. Veuillez réessayer.');
-      setClients([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
+  
+  // Fonction pour effectuer l'appel API
+  const fetchClients = async () => {
+    console.log('ClientsPage - fetchClients appelé avec:', { page, limit, sortBy, sortOrder, filters });
+    const response = await clientService.getClients(page, limit, {
+      ...filters,
+      sortBy,
+      sortOrder
+    });
+    
+    console.log('ClientsPage - réponse reçue dans fetchClients:', response);
+    return response;
   };
+  
+  // Utiliser notre hook personnalisé
+  const { data, loading, error, refetch } = useApi(
+    fetchClients,
+    [page, limit, sortBy, sortOrder, JSON.stringify(filters)],
+    {
+      initialData: { items: [], total: 0 },
+      onSuccess: (result) => {
+        console.log('ClientsPage - Données chargées avec succès:', result);
+      },
+      onError: (err) => {
+        console.error('ClientsPage - Erreur lors du chargement des données:', err);
+        setSnackbar({
+          open: true,
+          message: 'Erreur lors du chargement des clients',
+          severity: 'error'
+        });
+      }
+    }
+  );
+  
+  // Extraire les données
+  const clients = data?.items || [];
+  const total = data?.total || 0;
 
   const handleSearch = (searchFilters) => {
-    setPage(0);
-    fetchClients(searchFilters);
+    console.log('ClientsPage - handleSearch appelé avec:', searchFilters);
+    setFilters(searchFilters);
+    setPage(1);
   };
 
   const handlePageChange = (newPage) => {
-    setPage(newPage - 1);
+    console.log('ClientsPage - handlePageChange appelé avec:', newPage);
+    setPage(newPage);
   };
 
   const handleLimitChange = (newLimit) => {
+    console.log('ClientsPage - handleLimitChange appelé avec:', newLimit);
     setLimit(newLimit);
-    setPage(0);
+    setPage(1);
   };
 
   const handleSort = (field, direction) => {
+    console.log('ClientsPage - handleSort appelé avec:', { field, direction });
     setSortBy(field);
     setSortOrder(direction);
   };
 
   const handleDelete = async (id) => {
     try {
+      console.log('ClientsPage - handleDelete appelé pour l\'ID:', id);
       await clientService.deleteClient(id);
       
       setSnackbar({
@@ -80,9 +92,9 @@ const ClientsPage = () => {
       });
       
       // Rafraîchir la liste
-      fetchClients();
+      refetch();
     } catch (err) {
-      console.error('Erreur lors de la suppression du client:', err);
+      console.error('ClientsPage - Erreur lors de la suppression du client:', err);
       
       setSnackbar({
         open: true,
@@ -95,6 +107,17 @@ const ClientsPage = () => {
   const handleCloseSnackbar = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
   };
+
+  // Log des données avant le rendu
+  console.log('ClientsPage - rendu avec:', { 
+    clients, 
+    clientsLength: clients.length, 
+    total, 
+    page, 
+    limit, 
+    loading,
+    error
+  });
 
   return (
     <Container maxWidth="xl">
@@ -112,7 +135,7 @@ const ClientsPage = () => {
       <ClientList
         clients={clients}
         total={total}
-        page={page + 1}
+        page={page}
         limit={limit}
         onPageChange={handlePageChange}
         onLimitChange={handleLimitChange}

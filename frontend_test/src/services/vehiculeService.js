@@ -1,28 +1,12 @@
 import api from './api';
+import { extractApiData, buildApiParams, handleApiError } from '../utils/apiUtils';
 
 const VehiculeService = {
   // Récupérer tous les véhicules avec pagination et filtres
   getVehicules: async (page = 1, limit = 10, filters = {}) => {
     try {
-      // Convertir les paramètres pour l'API Platform
-      const params = { ...filters };
-      
-      // Ajouter les paramètres de pagination si nécessaire
-      if (page !== undefined) {
-        params.page = page; // API Platform utilise une pagination basée sur 1
-      }
-      
-      if (limit !== undefined) {
-        params.itemsPerPage = limit;
-      }
-      
-      // Ajouter les paramètres de tri si nécessaire
-      if (filters.sortBy && filters.sortOrder) {
-        params[`order[${filters.sortBy}]`] = filters.sortOrder.toLowerCase();
-        // Supprimer les paramètres de tri originaux
-        delete params.sortBy;
-        delete params.sortOrder;
-      }
+      // Construire les paramètres pour l'API
+      const params = buildApiParams({ page, limit, sortBy: filters.sortBy, sortOrder: filters.sortOrder, filters });
       
       // Traitement spécifique pour certains filtres
       if (filters.marque) {
@@ -55,28 +39,21 @@ const VehiculeService = {
         delete params.dateMax;
       }
       
-      console.log('Appel API véhicules avec params:', params);
+      console.log('VehiculeService - Appel API véhicules avec params:', params);
       const response = await api.get('/api/vehicules', { params });
       
-      // Vérifier la structure de la réponse
-      if (!response.data) {
-        console.error('Réponse API sans données');
-        return { data: { content: [], total: 0 } };
-      }
+      // Extraire et normaliser les données
+      const result = extractApiData(response);
       
-      // Extraire les données selon la structure de l'API
-      const content = response.data['hydra:member'] || [];
-      const total = response.data['hydra:totalItems'] || 0;
+      console.log('VehiculeService - Données extraites:', { 
+        items: result.items, 
+        total: result.total, 
+        itemsLength: result.items.length 
+      });
       
-      return {
-        data: {
-          content,
-          total
-        }
-      };
+      return result;
     } catch (error) {
-      console.error('Erreur lors de la récupération des véhicules:', error);
-      console.log('Détails de l\'erreur:', error.response?.data);
+      handleApiError(error, 'récupération des véhicules');
       throw error;
     }
   },
@@ -84,13 +61,11 @@ const VehiculeService = {
   // Récupérer un véhicule par son ID
   getVehiculeById: async (id) => {
     try {
-      console.log(`Appel API pour récupérer le véhicule ${id}`);
+      console.log(`VehiculeService - Récupération du véhicule ${id}`);
       const response = await api.get(`/api/vehicules/${id}`);
-      console.log(`Réponse API véhicule ${id}:`, response.data);
       return response.data;
     } catch (error) {
-      console.error(`Erreur lors de la récupération du véhicule ${id}:`, error);
-      console.error('Détails de l\'erreur:', error.response ? error.response.data : 'Pas de réponse');
+      handleApiError(error, `récupération du véhicule ${id}`);
       throw error;
     }
   },
@@ -98,13 +73,11 @@ const VehiculeService = {
   // Créer un nouveau véhicule
   createVehicule: async (vehiculeData) => {
     try {
-      console.log('Appel API pour créer un véhicule:', vehiculeData);
+      console.log('VehiculeService - Création d\'un véhicule:', vehiculeData);
       const response = await api.post('/api/vehicules', vehiculeData);
-      console.log('Réponse API création véhicule:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Erreur lors de la création du véhicule:', error);
-      console.error('Détails de l\'erreur:', error.response ? error.response.data : 'Pas de réponse');
+      handleApiError(error, 'création du véhicule');
       throw error;
     }
   },
@@ -112,13 +85,11 @@ const VehiculeService = {
   // Mettre à jour un véhicule
   updateVehicule: async (id, vehiculeData) => {
     try {
-      console.log(`Appel API pour mettre à jour le véhicule ${id}:`, vehiculeData);
+      console.log(`VehiculeService - Mise à jour du véhicule ${id}:`, vehiculeData);
       const response = await api.put(`/api/vehicules/${id}`, vehiculeData);
-      console.log(`Réponse API mise à jour véhicule ${id}:`, response.data);
       return response.data;
     } catch (error) {
-      console.error(`Erreur lors de la mise à jour du véhicule ${id}:`, error);
-      console.error('Détails de l\'erreur:', error.response ? error.response.data : 'Pas de réponse');
+      handleApiError(error, `mise à jour du véhicule ${id}`);
       throw error;
     }
   },
@@ -126,13 +97,11 @@ const VehiculeService = {
   // Supprimer un véhicule
   deleteVehicule: async (id) => {
     try {
-      console.log(`Appel API pour supprimer le véhicule ${id}`);
+      console.log(`VehiculeService - Suppression du véhicule ${id}`);
       const response = await api.delete(`/api/vehicules/${id}`);
-      console.log(`Réponse API suppression véhicule ${id}:`, response.data);
       return response.data;
     } catch (error) {
-      console.error(`Erreur lors de la suppression du véhicule ${id}:`, error);
-      console.error('Détails de l\'erreur:', error.response ? error.response.data : 'Pas de réponse');
+      handleApiError(error, `suppression du véhicule ${id}`);
       throw error;
     }
   },
@@ -140,32 +109,13 @@ const VehiculeService = {
   // Récupérer toutes les marques
   getMarques: async () => {
     try {
-      console.log('Appel API pour récupérer les marques');
+      console.log('VehiculeService - Récupération des marques');
       const response = await api.get('/api/marques');
-      console.log('Réponse API marques:', response.data);
       
-      // Extraire les données selon la structure de l'API
-      let items = [];
-      let total = 0;
-      
-      if (Array.isArray(response.data)) {
-        items = response.data;
-        total = response.data.length;
-      } else if (response.data.member && Array.isArray(response.data.member)) {
-        items = response.data.member;
-        total = response.data.totalItems || items.length;
-      } else if (response.data['hydra:member'] && Array.isArray(response.data['hydra:member'])) {
-        items = response.data['hydra:member'];
-        total = response.data['hydra:totalItems'] || items.length;
-      }
-      
-      return {
-        'hydra:member': items,
-        'hydra:totalItems': total
-      };
+      // Extraire et normaliser les données
+      return extractApiData(response);
     } catch (error) {
-      console.error('Erreur lors de la récupération des marques:', error);
-      console.error('Détails de l\'erreur:', error.response ? error.response.data : 'Pas de réponse');
+      handleApiError(error, 'récupération des marques');
       throw error;
     }
   },
@@ -174,32 +124,13 @@ const VehiculeService = {
   getModeles: async (marqueId = null) => {
     try {
       const params = marqueId ? { 'marque.id': marqueId } : {};
-      console.log('Appel API pour récupérer les modèles avec params:', params);
+      console.log('VehiculeService - Récupération des modèles avec params:', params);
       const response = await api.get('/api/modeles', { params });
-      console.log('Réponse API modèles:', response.data);
       
-      // Extraire les données selon la structure de l'API
-      let items = [];
-      let total = 0;
-      
-      if (Array.isArray(response.data)) {
-        items = response.data;
-        total = response.data.length;
-      } else if (response.data.member && Array.isArray(response.data.member)) {
-        items = response.data.member;
-        total = response.data.totalItems || items.length;
-      } else if (response.data['hydra:member'] && Array.isArray(response.data['hydra:member'])) {
-        items = response.data['hydra:member'];
-        total = response.data['hydra:totalItems'] || items.length;
-      }
-      
-      return {
-        'hydra:member': items,
-        'hydra:totalItems': total
-      };
+      // Extraire et normaliser les données
+      return extractApiData(response);
     } catch (error) {
-      console.error('Erreur lors de la récupération des modèles:', error);
-      console.error('Détails de l\'erreur:', error.response ? error.response.data : 'Pas de réponse');
+      handleApiError(error, 'récupération des modèles');
       throw error;
     }
   },
@@ -207,32 +138,13 @@ const VehiculeService = {
   // Récupérer toutes les énergies
   getEnergies: async () => {
     try {
-      console.log('Appel API pour récupérer les énergies');
+      console.log('VehiculeService - Récupération des énergies');
       const response = await api.get('/api/energies');
-      console.log('Réponse API énergies:', response.data);
       
-      // Extraire les données selon la structure de l'API
-      let items = [];
-      let total = 0;
-      
-      if (Array.isArray(response.data)) {
-        items = response.data;
-        total = response.data.length;
-      } else if (response.data.member && Array.isArray(response.data.member)) {
-        items = response.data.member;
-        total = response.data.totalItems || items.length;
-      } else if (response.data['hydra:member'] && Array.isArray(response.data['hydra:member'])) {
-        items = response.data['hydra:member'];
-        total = response.data['hydra:totalItems'] || items.length;
-      }
-      
-      return {
-        'hydra:member': items,
-        'hydra:totalItems': total
-      };
+      // Extraire et normaliser les données
+      return extractApiData(response);
     } catch (error) {
-      console.error('Erreur lors de la récupération des énergies:', error);
-      console.error('Détails de l\'erreur:', error.response ? error.response.data : 'Pas de réponse');
+      handleApiError(error, 'récupération des énergies');
       throw error;
     }
   }

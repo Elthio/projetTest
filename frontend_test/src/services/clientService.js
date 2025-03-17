@@ -1,28 +1,12 @@
 import api from './api';
+import { extractApiData, buildApiParams, handleApiError } from '../utils/apiUtils';
 
 const ClientService = {
   // Récupérer tous les clients avec pagination et filtres
   getClients: async (page = 1, limit = 10, filters = {}) => {
     try {
-      // Convertir les paramètres pour l'API Platform
-      const params = { ...filters };
-      
-      // Ajouter les paramètres de pagination si nécessaire
-      if (page !== undefined) {
-        params.page = page; // API Platform utilise une pagination basée sur 1
-      }
-      
-      if (limit !== undefined) {
-        params.itemsPerPage = limit;
-      }
-      
-      // Ajouter les paramètres de tri si nécessaire
-      if (filters.sortBy && filters.sortOrder) {
-        params[`order[${filters.sortBy}]`] = filters.sortOrder.toLowerCase();
-        // Supprimer les paramètres de tri originaux
-        delete params.sortBy;
-        delete params.sortOrder;
-      }
+      // Construire les paramètres pour l'API
+      const params = buildApiParams({ page, limit, sortBy: filters.sortBy, sortOrder: filters.sortOrder, filters });
       
       // Traitement spécifique pour certains filtres
       if (filters.nom) {
@@ -54,34 +38,25 @@ const ClientService = {
         delete params.telephone;
       }
       
-      if (filters.estProprietaireActuel !== null) {
+      if (filters.estProprietaireActuel !== null && filters.estProprietaireActuel !== undefined) {
         params['estProprietaireActuel'] = filters.estProprietaireActuel;
       }
       
-      console.log('Appel API clients avec params:', params);
+      console.log('ClientService - Appel API clients avec params:', params);
       const response = await api.get('/api/clients', { params });
-      console.log('Réponse API clients brute:', response);
-      console.log('Réponse API clients data:', response.data);
       
-      // Vérifier la structure de la réponse
-      if (!response.data) {
-        console.error('Réponse API sans données');
-        return { data: { content: [], total: 0 } };
-      }
+      // Extraire et normaliser les données
+      const result = extractApiData(response);
       
-      // Extraire les données selon la structure de l'API
-      const content = response.data['hydra:member'] || [];
-      const total = response.data['hydra:totalItems'] || 0;
+      console.log('ClientService - Données extraites:', { 
+        items: result.items, 
+        total: result.total, 
+        itemsLength: result.items.length 
+      });
       
-      return {
-        data: {
-          content,
-          total
-        }
-      };
+      return result;
     } catch (error) {
-      console.error('Erreur lors de la récupération des clients:', error);
-      console.error('Détails de l\'erreur:', error.response ? error.response.data : 'Pas de réponse');
+      handleApiError(error, 'récupération des clients');
       throw error;
     }
   },
@@ -89,13 +64,11 @@ const ClientService = {
   // Récupérer un client par son ID
   getClientById: async (id) => {
     try {
-      console.log(`Appel API pour récupérer le client ${id}`);
+      console.log(`ClientService - Récupération du client ${id}`);
       const response = await api.get(`/api/clients/${id}`);
-      console.log(`Réponse API client ${id}:`, response.data);
       return response.data;
     } catch (error) {
-      console.error(`Erreur lors de la récupération du client ${id}:`, error);
-      console.error('Détails de l\'erreur:', error.response ? error.response.data : 'Pas de réponse');
+      handleApiError(error, `récupération du client ${id}`);
       throw error;
     }
   },
@@ -103,13 +76,11 @@ const ClientService = {
   // Créer un nouveau client
   createClient: async (clientData) => {
     try {
-      console.log('Appel API pour créer un client:', clientData);
+      console.log('ClientService - Création d\'un client:', clientData);
       const response = await api.post('/api/clients', clientData);
-      console.log('Réponse API création client:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Erreur lors de la création du client:', error);
-      console.error('Détails de l\'erreur:', error.response ? error.response.data : 'Pas de réponse');
+      handleApiError(error, 'création du client');
       throw error;
     }
   },
@@ -117,13 +88,11 @@ const ClientService = {
   // Mettre à jour un client
   updateClient: async (id, clientData) => {
     try {
-      console.log(`Appel API pour mettre à jour le client ${id}:`, clientData);
+      console.log(`ClientService - Mise à jour du client ${id}:`, clientData);
       const response = await api.put(`/api/clients/${id}`, clientData);
-      console.log(`Réponse API mise à jour client ${id}:`, response.data);
       return response.data;
     } catch (error) {
-      console.error(`Erreur lors de la mise à jour du client ${id}:`, error);
-      console.error('Détails de l\'erreur:', error.response ? error.response.data : 'Pas de réponse');
+      handleApiError(error, `mise à jour du client ${id}`);
       throw error;
     }
   },
@@ -131,18 +100,16 @@ const ClientService = {
   // Supprimer un client
   deleteClient: async (id) => {
     try {
-      console.log(`Appel API pour supprimer le client ${id}`);
+      console.log(`ClientService - Suppression du client ${id}`);
       const response = await api.delete(`/api/clients/${id}`);
-      console.log(`Réponse API suppression client ${id}:`, response.data);
       return response.data;
     } catch (error) {
-      console.error(`Erreur lors de la suppression du client ${id}:`, error);
-      console.error('Détails de l\'erreur:', error.response ? error.response.data : 'Pas de réponse');
+      handleApiError(error, `suppression du client ${id}`);
       throw error;
     }
   },
 
-  // Récupérer toutes les civilités (données statiques car l'API n'existe pas)
+  // Récupérer toutes les civilités
   getCivilites: async () => {
     try {
       // Au lieu d'appeler l'API qui n'existe pas, nous retournons une liste statique
@@ -154,13 +121,12 @@ const ClientService = {
         { id: 5, libelle: 'Société' }
       ];
       
-      // Simuler la structure de réponse de l'API
       return {
-        'hydra:member': civilites,
-        'hydra:totalItems': civilites.length
+        items: civilites,
+        total: civilites.length
       };
     } catch (error) {
-      console.error('Erreur lors de la récupération des civilités:', error);
+      handleApiError(error, 'récupération des civilités');
       throw error;
     }
   }

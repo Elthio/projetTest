@@ -18,7 +18,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Grid
+  Grid,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
@@ -33,9 +35,27 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import EventIcon from '@mui/icons-material/Event';
 import SortIcon from '@mui/icons-material/Sort';
 
-const VehiculeList = ({ vehicules, total, page, limit, onPageChange, onLimitChange, onDelete, onSort }) => {
+const VehiculeList = ({ vehicules, total, page, limit, onPageChange, onLimitChange, onDelete, onSort, loading }) => {
   const [sortField, setSortField] = useState('id');
   const [sortDirection, setSortDirection] = useState('DESC');
+
+  console.log('VehiculeList - rendu avec:', { 
+    vehicules, 
+    vehiculesLength: vehicules ? vehicules.length : 'undefined', 
+    total, 
+    page, 
+    limit, 
+    loading 
+  });
+
+  // Vérification supplémentaire pour le débogage
+  if (!vehicules || vehicules.length === 0) {
+    console.log('VehiculeList - Attention: tableau de véhicules vide ou non défini');
+    console.log('VehiculeList - Props reçues:', { vehicules, total, page, limit, loading });
+  } else {
+    console.log('VehiculeList - Véhicules reçus:', vehicules);
+    console.log('VehiculeList - Premier véhicule:', vehicules[0]);
+  }
 
   const handleChangePage = (event, newPage) => {
     onPageChange(newPage + 1);
@@ -145,6 +165,40 @@ const VehiculeList = ({ vehicules, total, page, limit, onPageChange, onLimitChan
       id: vehiculeId + 100
     };
   };
+
+  // Afficher un indicateur de chargement
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
+        <CircularProgress size={60} thickness={4} />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Chargement des véhicules...
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Afficher un message si aucun véhicule n'est trouvé
+  if (!vehicules || vehicules.length === 0) {
+    return (
+      <Box sx={{ mt: 4 }}>
+        <Alert severity="info">
+          Aucun véhicule trouvé. Veuillez modifier vos critères de recherche ou ajouter de nouveaux véhicules.
+        </Alert>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Button
+            component={Link}
+            to="/vehicules/nouveau"
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+          >
+            Ajouter un véhicule
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Paper elevation={3}>

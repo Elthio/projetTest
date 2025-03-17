@@ -19,7 +19,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Grid
+  Grid,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
@@ -36,9 +38,27 @@ import EmailIcon from '@mui/icons-material/Email';
 import SortIcon from '@mui/icons-material/Sort';
 import { blue, pink, grey } from '@mui/material/colors';
 
-const ClientList = ({ clients, total, page, limit, onPageChange, onLimitChange, onDelete, onSort }) => {
+const ClientList = ({ clients, total, page, limit, onPageChange, onLimitChange, onDelete, onSort, loading }) => {
   const [sortField, setSortField] = useState('id');
   const [sortDirection, setSortDirection] = useState('DESC');
+
+  console.log('ClientList - rendu avec:', { 
+    clients, 
+    clientsLength: clients ? clients.length : 'undefined', 
+    total, 
+    page, 
+    limit, 
+    loading 
+  });
+
+  // Vérification supplémentaire pour le débogage
+  if (!clients || clients.length === 0) {
+    console.log('ClientList - Attention: tableau de clients vide ou non défini');
+    console.log('ClientList - Props reçues:', { clients, total, page, limit, loading });
+  } else {
+    console.log('ClientList - Clients reçus:', clients);
+    console.log('ClientList - Premier client:', clients[0]);
+  }
 
   const handleChangePage = (event, newPage) => {
     onPageChange(newPage + 1);
@@ -142,6 +162,40 @@ const ClientList = ({ clients, total, page, limit, onPageChange, onLimitChange, 
     };
   };
 
+  // Afficher un indicateur de chargement
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
+        <CircularProgress size={60} thickness={4} />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Chargement des clients...
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Afficher un message si aucun client n'est trouvé
+  if (!clients || clients.length === 0) {
+    return (
+      <Box sx={{ mt: 4 }}>
+        <Alert severity="info">
+          Aucun client trouvé. Veuillez modifier vos critères de recherche ou ajouter de nouveaux clients.
+        </Alert>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Button
+            component={Link}
+            to="/clients/nouveau"
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+          >
+            Ajouter un client
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Paper elevation={3}>
       <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -214,8 +268,9 @@ const ClientList = ({ clients, total, page, limit, onPageChange, onLimitChange, 
             </TableRow>
           </TableHead>
           <TableBody>
-            {clients.length > 0 ? (
+            {clients && clients.length > 0 ? (
               clients.map((client) => {
+                console.log('ClientList - rendu client:', client);
                 const initiales = getInitiales(client);
                 const avatarColor = getAvatarColor(client.civilite);
                 const adresseInfo = getAdresseInfo(client);

@@ -9,7 +9,7 @@ const VentesPage = () => {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [sortBy, setSortBy] = useState('id');
   const [sortOrder, setSortOrder] = useState('DESC');
@@ -51,17 +51,17 @@ const VentesPage = () => {
   };
 
   const handleSearch = (searchFilters) => {
-    setPage(0);
+    setPage(1);
     fetchVentes(searchFilters);
   };
 
   const handlePageChange = (newPage) => {
-    setPage(newPage - 1);
+    setPage(newPage);
   };
 
   const handleLimitChange = (newLimit) => {
     setLimit(newLimit);
-    setPage(0);
+    setPage(1);
   };
 
   const handleSort = (field, direction) => {
@@ -112,7 +112,7 @@ const VentesPage = () => {
       <VenteList
         ventes={ventes}
         total={total}
-        page={page + 1}
+        page={page}
         limit={limit}
         onPageChange={handlePageChange}
         onLimitChange={handleLimitChange}

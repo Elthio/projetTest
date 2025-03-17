@@ -2,14 +2,14 @@ import api from './api';
 
 const VenteService = {
   // Récupérer toutes les ventes avec pagination et filtres
-  getVentes: async (page = 0, limit = 10, filters = {}) => {
+  getVentes: async (page = 1, limit = 10, filters = {}) => {
     try {
       // Convertir les paramètres pour l'API Platform
       const params = { ...filters };
       
       // Ajouter les paramètres de pagination si nécessaire
       if (page !== undefined) {
-        params.page = page + 1; // API Platform utilise une pagination basée sur 1
+        params.page = page; // API Platform utilise une pagination basée sur 1
       }
       
       if (limit !== undefined) {
