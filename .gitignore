@@ -1,1 +1,4 @@
 /bdd/
+/frontend_test/build/
+/frontend_test/node_modules/
+/backend_test/.env
